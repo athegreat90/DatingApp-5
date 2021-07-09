@@ -1,5 +1,6 @@
-export interface User 
+export class User 
 {
-    username: string;
-    token: string;
+    username: string = '';
+    token: string = '';
 }
+
