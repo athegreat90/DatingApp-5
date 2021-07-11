@@ -3,3 +3,4 @@
 /.idea
 /.idea/*
 .idea/
+API/appsettings.Development.json
