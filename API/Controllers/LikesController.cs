@@ -27,7 +27,7 @@ namespace API.Controllers
         public async Task<ActionResult> AddLike(string username)
         {
             var sourceUserId = User.GetUserId();
-            var likedUser = await _userRepository.GetUserByUsernameAsync(username);
+            var likedUser = await _userRepository.GetUserByUsernameAsync(username.ToLower());
             var sourceUser = await _likesRepository.GetUserWithLikes(sourceUserId);
 
             if (likedUser == null)
@@ -35,7 +35,7 @@ namespace API.Controllers
                 return NotFound();
             }
 
-            if (sourceUser.UserName == username) return BadRequest("You cannot like yourself");
+            if (sourceUser.UserName.ToLower().Equals(username.ToLower())) return BadRequest("You cannot like yourself");
 
             var userLike = await _likesRepository.GetUserLike(sourceUserId, likedUser.Id);
             if (userLike != null) return BadRequest("You already like this user");
