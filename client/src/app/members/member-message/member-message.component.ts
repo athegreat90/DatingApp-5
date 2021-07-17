@@ -12,10 +12,10 @@ export class MemberMessageComponent implements OnInit
 {
     @ViewChild('messageForm') messageForm!: NgForm;
     @Input() username!: string;
-    @Input() messages!: Message[];
+    @Input() messages: Message[] = [];
     messageContent!: string;
 
-    constructor(private messageService: MessageService) { }
+    constructor(public messageService: MessageService) { }
 
     ngOnInit(): void
     {
@@ -24,9 +24,8 @@ export class MemberMessageComponent implements OnInit
 
     sendMessage()
     {
-        this.messageService.sendMessage(this.username, this.messageContent).subscribe(message => 
+        this.messageService.sendMessage(this.username, this.messageContent).then(() => 
         {
-            this.messages.push(message);
             this.messageForm.reset();
         });
     }

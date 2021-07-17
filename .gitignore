@@ -4,3 +4,5 @@
 /.idea/*
 .idea/
 API/appsettings.Development.json
+API/datingapp.db-shm
+API/datingapp.db-wal

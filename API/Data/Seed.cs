@@ -40,6 +40,7 @@ namespace API.Data
             }
             foreach (var user in users)
             {
+                user.UserName = user.UserName.ToLower();
                 await userManager.CreateAsync(user, Password);
                 await userManager.AddToRoleAsync(user, "Member");
             }

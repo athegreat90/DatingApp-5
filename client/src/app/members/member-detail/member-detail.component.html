@@ -1,9 +1,12 @@
 <div class="row">
     <div class="col-4">
         <div class="card">
-            <img src="{{member?.photoUrl ||'./assert/user.png'}}" alt="{{member?.knownAs}}"
+            <img src="{{member?.photoUrl || 'assets/user.png'}}" alt="{{member?.knownAs}}"
                 class="card-img-top img-thumbnail">
             <div class="card-body">
+                <div class="mb-2" *ngIf="(presence.onlineUsers$ | async).includes(member?.username)">
+                    <i class="fa fa-user-circle text-success"></i> Online now
+                </div>
                 <div>
                     <strong>Location:</strong>
                     <p>{{member?.city}}, {{member?.country}}</p>
@@ -44,14 +47,14 @@
             <tab heading="Photos" (selectTab)="onTabActivated($event)">
                 <carousel>
                     <slide *ngFor="let photo of member?.photos; let i=index">
-                        <img src="{{photo?.url}}" alt="first slide"
+                        <img src="{{photo?.url || 'assets/user.png'}}" alt="first slide"
                             style="display: inline-block; margin-bottom: 20px; width: 100%;">
                     </slide>
 
                 </carousel>
             </tab>
             <tab heading="Messages" (selectTab)="onTabActivated($event)">
-                <app-member-message [messages]="messages" [username]="member?.username"></app-member-message>
+                <app-member-message [username]="member?.username"></app-member-message>
             </tab>
         </tabset>
     </div>
