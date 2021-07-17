@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 import { Group } from '../models/group';
 import { Message } from '../models/message';
 import { User } from '../models/user';
+import { BusyService } from './busy.service';
 import { getPaginatedResult, getPaginationHeaders } from './paginationHelper';
 
 @Injectable({
@@ -20,30 +21,34 @@ export class MessageService
     private messageThreadSource = new BehaviorSubject<Message[]>([]);
     messageThread$ = this.messageThreadSource.asObservable();
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private busyService: BusyService) { }
 
     createHubConnection(user: User, otherUsername: string)
     {
-        this.hubConnection = new HubConnectionBuilder().withUrl(`${this.hubUrl}message?user=${otherUsername}`,
-            {
+        this.busyService.busy();
+        this.hubConnection = new HubConnectionBuilder()
+            .withUrl(this.hubUrl + 'message?user=' + otherUsername, {
                 accessTokenFactory: () => user.token
-            }).withAutomaticReconnect().build();
+            })
+            .withAutomaticReconnect()
+            .build()
 
-        this.hubConnection.start().catch(error => console.log(error));
+        this.hubConnection.start()
+            .catch(error => console.log(error))
+            .finally(() => this.busyService.idle());
 
-        this.hubConnection.on('ReceiveMessageThread', messages => 
+        this.hubConnection.on('ReceiveMessageThread', messages =>
         {
             this.messageThreadSource.next(messages);
-        });
+        })
 
         this.hubConnection.on('NewMessage', message =>
         {
-            console.log('Executed new message');
-            this.messageThread$.pipe(take(1)).subscribe(messages => 
+            this.messageThread$.pipe(take(1)).subscribe(messages =>
             {
-                this.messageThreadSource.next([...messages, message]);
-            });
-        });
+                this.messageThreadSource.next([...messages, message])
+            })
+        })
 
         this.hubConnection.on('UpdatedGroup', (group: Group) =>
         {
@@ -61,14 +66,15 @@ export class MessageService
                     this.messageThreadSource.next([...messages]);
                 })
             }
-        });
+        })
     }
 
     stopHubConnection()
     {
         if (this.hubConnection)
         {
-            this.hubConnection.stop().catch(error => console.log(error));
+            this.messageThreadSource.next([]);
+            this.hubConnection.stop();
         }
     }
 
@@ -76,21 +82,22 @@ export class MessageService
     {
         let params = getPaginationHeaders(pageNumber, pageSize);
         params = params.append('Container', container);
-        return getPaginatedResult<Message[]>(`${this.baseUrl}messages`, params, this.http);
+        return getPaginatedResult<Message[]>(this.baseUrl + 'messages', params, this.http);
     }
 
     getMessageThread(username: string)
     {
-        return this.http.get<Message[]>(`${this.baseUrl}messages/thread/${username}`);
+        return this.http.get<Message[]>(this.baseUrl + 'messages/thread/' + username);
     }
 
     async sendMessage(username: string, content: string)
     {
-        return this.hubConnection.invoke(`SendMessage`, { recipientUsername: username, content: content }).catch(error => console.log(error));
+        return this.hubConnection.invoke('SendMessage', { recipientUsername: username, content })
+            .catch(error => console.log(error));
     }
 
     deleteMessage(id: number)
     {
-        return this.http.delete(`${this.baseUrl}messages/${id}`);
+        return this.http.delete(this.baseUrl + 'messages/' + id);
     }
 }
